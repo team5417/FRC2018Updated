@@ -21,6 +21,7 @@ import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.I2C;
@@ -48,10 +49,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot implements PIDSource, PIDOutput {
+
 	//Initialize Auto modes
+	DriverStation driverstation = DriverStation.getInstance();
 	private static final String kDefaultAuto = "Default";
 	private static final String kCustomAuto = "My Auto";
 	private String m_autoSelected;
+	String autoSelected = "";
+	final String defaultAuto = "Default Autonomous";
+	final String leftAuto = "Left auto";
+	final String centerAuto = "Center auto";
+	final String driveStraight = "Drive straight";
+	final String rightAuto = "Right auto";
 
 	private SendableChooser<String> m_chooser = new SendableChooser<>();
 	
@@ -60,9 +69,11 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	WPI_TalonSRX leftMotor2 = new WPI_TalonSRX(2);
 	WPI_TalonSRX rightMotor1 = new WPI_TalonSRX(5);
 	WPI_TalonSRX rightMotor2 = new WPI_TalonSRX(6);
-	VictorSP armMotor1 = new VictorSP(0); //WPI_TalonSRX armMotor1 = new WPI_TalonSRX(3);
-	VictorSP armMotor2 = new VictorSP(1); //WPI_TalonSRX armMotor2 = new WPI_TalonSRX(7);
-//	WPI_TalonSRX climberMotor1 = new WPI_TalonSRX(0);
+	VictorSP armMotor1 = new VictorSP(0); 
+	//WPI_TalonSRX armMotor1 = new WPI_TalonSRX(3);
+	VictorSP armMotor2 = new VictorSP(1); 
+	//WPI_TalonSRX armMotor2 = new WPI_TalonSRX(7);
+	//WPI_TalonSRX climberMotor1 = new WPI_TalonSRX(0);
 	WPI_TalonSRX climberMotor1 = new WPI_TalonSRX(4);
 	
 	//Using VictorSP's for the intake motors
@@ -71,7 +82,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	
 	//Initialize compressor which is used for changing gears, brakes on the climber, and climbing pistons 
 	Compressor compressor = new Compressor();
-	
 	
 	//Initialize Solenoids for pistons
 	Solenoid gearShift = new Solenoid(0);
@@ -98,7 +108,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	ArmPID leftArmPIDMoving = new ArmPID(leftEncoder, PIDSourceType.kRate, armMotor1, .002, 0.0001, 0);
 	ArmPID rightArmPIDMoving = new ArmPID(rightEncoder, PIDSourceType.kRate, armMotor2, .002, 0.00005, .0001);
 	
-	
 	//Timer for stuff
 	Timer timer = new Timer();
 
@@ -115,7 +124,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	int leftPosition = 0;
 	int rightPosition = 0;
 	boolean buttonstatus = false;
-	// NavxPID navxPID = new NavxPID(.1,20000, 0);
+	//NavxPID navxPID = new NavxPID(.1,20000, 0);
 	double left;
 	double right;
 	AHRS navx;
@@ -123,12 +132,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	ContinuousAngleTracker tlCAT;
 	ContinuousAngleTracker trCAT;
 	double yaw = 0;
-	final String defaultAuto = "Default Autonomous";
-	final String gearTestAuto = "Left auto";
-	final String otherAuto = "other auto";
-	final String centerAuto = "Center auto";
-	final String driveStraight = "Drive straight";
-	final String rightAuto = "Right auto";
 	double multiplier = 0;
 	boolean pressed = false;
 	// Trajectory.Config config = new
@@ -218,12 +221,28 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		// m_autoSelected = m_chooser.getSelected();
 		// m_autoSelected = SmartDashboard.getString("Auto Selector",
 		// kDefaultAuto);
-		System.out.println("Auto selected: " + m_autoSelected);
+		if (SmartDashboard.getBoolean("DB/Button 0", false)) {
+			autoSelected = "Drive Straight";
+		}
+		else if (SmartDashboard.getBoolean("DB/Button 1", false)) {
+			autoSelected = "Left auto";
+		}
+		else if (SmartDashboard.getBoolean("DB/Button 2", false)) {
+			autoSelected = "Center auto";
+		}
+		else if (SmartDashboard.getBoolean("DB/Button 3", false)) {
+			autoSelected = "Right auto";
+		}
+		
+		SmartDashboard.putString("DB/String 1","auto:" + autoSelected);
+		
 		gearShift.set(false);
 		climbPistons.set(false);
 		wristPistons.set(false);
 		initLeftPosition = leftMotor1.getSelectedSensorPosition(0);
 		initRightPosition = -rightMotor1.getSelectedSensorPosition(0);
+		getSwitchString(); //if true then is left
+		
 	}
 
 	/**
@@ -234,11 +253,44 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		// update the continuous angle tracker with the current angle so it can track
 		// angles over time
 		dsCAT.nextAngle(navx.getYaw());
-
-		switch (m_autoSelected) {
+		switch (autoSelected) {
 		case kCustomAuto:
-			if (!run) {
-				driveDistance(149);
+			break;
+		case kDefaultAuto:
+			//
+			break;
+		case leftAuto:		//left side autonomous
+			//if switch is left 
+			if (getSwitchString()) {
+				 driveDistance(149);
+				 turnRight();
+				 Timer timer = new Timer();
+				 timer.start();
+				 while (timer.get()<1) {
+				 leftIntake.set(-1);
+				 rightIntake.set(1);
+				 }
+				 leftIntake.set(0);
+				 rightIntake.set(0);
+				 left = 0;
+				 right = 0;			 
+				 break;
+			}
+			//if switch is right
+			if (!getSwitchString()) {
+				 //drive behind switch and do the thing
+				SmartDashboard.putString("DB/String 3", "is right side switch");
+				break;
+			}
+			break;
+		case centerAuto:
+			driveDistance(125); // just drive straight for now
+			SmartDashboard.putString("DB/String 3", "is driveStaight");
+			break;
+		case rightAuto:			//for right side autonomous
+			//if switch is right
+			if (!getSwitchString()) {
+				 driveDistance(149);
 				 turnLeft();
 				 Timer timer = new Timer();
 				 timer.start();
@@ -248,37 +300,19 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 				 }
 				 leftIntake.set(0);
 				 rightIntake.set(0);
-				SmartDashboard.putString("DB/String 9", "Final: " + dsCAT.getAngle());
-				run = true;
+				 left = 0;
+				 right = 0;
+				 break;
 			}
-			break;
-		case kDefaultAuto:
-			//
+			//if switch is left
+			if (getSwitchString()) {
+				 //drive behind switch and do the thing
+				SmartDashboard.putString("DB/String 3", "is left side switch");
+				break;
+			}
 			break;
 		default:
-			// navx.zeroYaw();
-			while (yaw < 70) {
-				// yaw = navx.getYaw();
-				yaw = dsCAT.getAngle();
-				m_drive.tankDrive(.6, -.6);
-				SmartDashboard.putString("DB/String 4", "Yaw: " + yaw);
-				// SmartDashboard.putString("DB/String 5", "Checking navx");
-				SmartDashboard.putString("DB/String 6", "left: " + m_left.get());
-				SmartDashboard.putString("DB/String 7", "Right: " + m_right.get());
-			}
-			while (yaw < 90) {
-				// yaw = navx.getYaw();
-				yaw = dsCAT.getAngle();
-				m_drive.tankDrive(.5, -.5);
-				SmartDashboard.putString("DB/String 4", "Yaw: " + yaw);
-				// SmartDashboard.putString("DB/String 5", "Checking navx");
-				SmartDashboard.putString("DB/String 6", "left: " + m_left.get());
-				SmartDashboard.putString("DB/String 7", "Right: " + m_right.get());
-			}
-			m_drive.tankDrive(0, 0);
-			SmartDashboard.putString("DB/String 5", "Stopped robot");
 			break;
-
 		}
 	}
 
@@ -600,6 +634,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		SmartDashboard.putString("DB/String 2", "" + (leftMotor1.getSelectedSensorPosition(0) - leftPosition));
 	}
 
+	///////////////// Reset PID
 	public void resetNavxPID() {
 		navxPID.reset();
 		navxPID.setOutputRange(-0.5, .5);
@@ -608,7 +643,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		navxPID.enable();
 	}
 
-	////////////////////////////////////////// TURN LEFT
+	////////////////////////////////////////// TURN RIGHT
 	////////////////////////////////////////// /////////////////////////////////////////////////
 
 	public void turnRight() {
@@ -654,6 +689,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
 	
+	///////////////////////////// TURN LEFT ////////////////////////////////////////////
 	public void turnLeft() {
 		tlCAT.reset();
 		tlCAT.nextAngle(navx.getYaw());
@@ -694,4 +730,24 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		m_drive.tankDrive(0, 0);
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
+	
+	
+	///////////////////////// getting string for autonomous //////////////////////////////
+	// if the switch is Left then the return will be true
+	// if the switch is Right then the return will be false
+	public boolean getSwitchString() {
+		String gameData = DriverStation.getInstance().getGameSpecificMessage();
+		char switchStr = gameData.charAt(0);
+		boolean switchLeft;
+		if(switchStr == 'L') {
+			switchLeft = true; 
+			return switchLeft;
+		}
+		if(switchStr == 'R') {
+			switchLeft = false;
+			return switchLeft;
+		}
+		else return false;
+	}
+		
 }
