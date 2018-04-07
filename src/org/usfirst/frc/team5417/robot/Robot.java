@@ -72,16 +72,16 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	WPI_TalonSRX elevatorMotor = new WPI_TalonSRX(4);
 
 	/////////////////////// MOUNTING CLIMBER
-	/* arm motor is now talon(0)
-	 * talon(3) will be one of the climber motors (40A)
+	/*
+	 * arm motor is now talon(0) talon(3) will be one of the climber motors (40A)
 	 * talon(8) is another climber motor (40A)
 	 * 
-	
-	
-	*/
+	 * 
+	 * 
+	 */
 	// Using VictorSP's for the intake motors
 	VictorSP leftIntake = new VictorSP(0); // change to 0 and 1 at competition
-	VictorSP rightIntake = new VictorSP(1); 
+	VictorSP rightIntake = new VictorSP(1);
 
 	// Initialize compressor which is used for changing gears, brakes on the
 	// climber, and climbing pistons
@@ -96,7 +96,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	// Initialize limit switches for Arm
 	DigitalInput topLimitSwitch = new DigitalInput(5);
 	DigitalInput bottomLimitSwitch = new DigitalInput(3);
-	DigitalInput topLimitSwitchArm = new DigitalInput(7); 
+	DigitalInput topLimitSwitchArm = new DigitalInput(7);
 	DigitalInput bottomLimitSwitchArm = new DigitalInput(2);
 
 	// Initialize servo for the ramp/lift
@@ -104,16 +104,16 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 
 	// Initialize encoders
 	// Encoder leftEncoder = new Encoder(encoderLeftA, encoderLeftB, true);
-	 //Encoder rightEncoder = new Encoder(encoderRightA, encoderRightB, true);
+	// Encoder rightEncoder = new Encoder(encoderRightA, encoderRightB, true);
 	// AnalogInput ai;
 	// AnalogInput armEncoder = new AnalogInput(0);
 
 	// Initialize PID for drive system and for the 4bar arm system
 	PIDController navxPID = new PIDController(.01, 0, .1, this, this); /// changed PID values
-//	 ArmPID leftArmPIDMoving = new ArmPID(leftEncoder, PIDSourceType.kRate,
-//	 armMotor1, .002, 0.0001, 0);
-//	 ArmPID rightArmPIDMoving = new ArmPID(rightEncoder, PIDSourceType.kRate,
-//	 armMotor2, .002, 0.00005, .0001);
+	// ArmPID leftArmPIDMoving = new ArmPID(leftEncoder, PIDSourceType.kRate,
+	// armMotor1, .002, 0.0001, 0);
+	// ArmPID rightArmPIDMoving = new ArmPID(rightEncoder, PIDSourceType.kRate,
+	// armMotor2, .002, 0.00005, .0001);
 
 	// Timer for stuff
 	Timer timer = new Timer();
@@ -174,6 +174,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	double movingSetpoint = 0;
 	double forwardSpeed = .8;
 	double finalDrive = .8;
+	double centerSpeed = .7;
 
 	/**
 	 * This function is run when the robot is first started up and should be used
@@ -186,24 +187,22 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		if (DriverStation.getInstance().getBatteryVoltage() < 12.6) {
 			finalDrive = .9;
 			SmartDashboard.putString("DB/String 5", "low voltage");
-		}
-		else {
+		} else {
 			finalDrive = .85;
 		}
 		if (DriverStation.getInstance().getBatteryVoltage() > 12.6) {
 			turnSpeed = .75;
 			SmartDashboard.putString("DB/String 5", "high voltage");
 		} else {
-			turnSpeed = .6;
+			turnSpeed = .7;
 		}
 		if (DriverStation.getInstance().getBatteryVoltage() < 12.6) {
 			forwardSpeed = .85;
-		}
-		else {
+		} else {
 			forwardSpeed = .8;
 		}
-//		 leftEncoder.setDistancePerPulse(0.17578125);
-//		 rightEncoder.setDistancePerPulse(0.17578125);
+		// leftEncoder.setDistancePerPulse(0.17578125);
+		// rightEncoder.setDistancePerPulse(0.17578125);
 
 		dsCAT = new ContinuousAngleTracker();
 		tlCAT = new ContinuousAngleTracker();
@@ -233,7 +232,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		resetNavxPID();
 		m_autoSelected = kCustomAuto;
 		// leftFollower.configurePIDVA(.8, 0, 0, 127);
-		
+
 	}
 
 	/**
@@ -263,15 +262,13 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			autoSelected = "Center auto";
 		} else if (SmartDashboard.getBoolean("DB/Button 3", false)) {
 			autoSelected = "Right auto";
-		} 
-		else  {
+		} else {
 			autoSelected = "Drive Straight";
 		}
 
 		SmartDashboard.putString("DB/String 1", "auto:" + autoSelected);
-		SmartDashboard.putString("Left Encoder","left" + leftPosition);
-		SmartDashboard.putString("Right Encoder","Right" + rightPosition);
-		
+		SmartDashboard.putString("Left Encoder", "left" + leftPosition);
+		SmartDashboard.putString("Right Encoder", "Right" + rightPosition);
 
 		gearShift.set(false);
 		climbPistons.set(false);
@@ -280,7 +277,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		initRightPosition = -rightMotor2.getSelectedSensorPosition(0);
 		getSwitchString(); // if true then is left
 		run = false;
-		
 
 	}
 
@@ -293,7 +289,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		// angles over time
 		if (!run) {
 			rampServo.set(1);
-			
+
 			dsCAT.nextAngle(navx.getYaw());
 			switch (autoSelected) {
 			case kCustomAuto:
@@ -301,7 +297,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			case kDefaultAuto:
 				driveDistance(177);
 				break;
-				
+
 			case driveStraight:
 				driveDistance(177);
 				break;
@@ -310,11 +306,11 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 				// if switch is left and left side station
 				if (getSwitchString()) {
 					driveDistance(177);
-					turnRight100();
+					turnRight();
 					Timer timer = new Timer();
 					timer.start();
-					
-					while (timer.get() < 1.5) {
+
+					while (timer.get() < .8) {
 						m_drive.tankDrive(finalDrive, finalDrive);
 					}
 					timer.reset();
@@ -328,31 +324,29 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 					m_right.set(0);
 					break;
 				}
-				// if right side switch and left side station and not trying
-				else if (!getSwitchString() && !dsButton) {
-//					driveDistance(70);
-//					Timer.delay(.3);
-//					turnRight();
-//					Timer.delay(.3);
-//					driveDistance(178);
-//					Timer.delay(.3);
-//					turnLeft();
-//					Timer.delay(.3);
-//					Timer timer = new Timer();
-//					timer.start();
-//					while (timer.get() < 2) {
-//						m_drive.tankDrive(.6, .6);
-//					}
-//					timer.reset();
-//					while (timer.get() < 3) {
-//						leftIntake.set(-1);
-//						rightIntake.set(1);
-//					}
-//					leftIntake.set(0);
-//					rightIntake.set(0);
-//					m_left.set(0);
-//					m_right.set(0);
-					driveDistance(144);
+				// if right side switch and left position
+				else if (!getSwitchString()) {
+					driveDistance(212);
+					turnRight();
+					driveDistance(220);
+					turnRight();
+					driveDistance(70);
+					turnRight();
+					Timer timer = new Timer();
+					timer.start();
+
+					while (timer.get() < .8) {
+						m_drive.tankDrive(finalDrive, finalDrive);
+					}
+					timer.reset();
+					while (timer.get() < 3) {
+						leftIntake.set(-1);
+						rightIntake.set(1);
+					}
+					leftIntake.set(0);
+					rightIntake.set(0);
+					m_left.set(0);
+					m_right.set(0);
 					break;
 				} else {
 					driveDistance(144);
@@ -363,18 +357,18 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 				// if center and left switch
 				if (getSwitchString()) {
 					driveDistance(60);
-//					Timer.delay(.3);
+					// Timer.delay(.3);
 					turnLeft();
-//					Timer.delay(.3);
+					// Timer.delay(.3);
 					driveDistance(92);
 					Timer.delay(.3);
 					turnRight();
-//					Timer.delay(.3);
+					// Timer.delay(.3);
 					Timer timer = new Timer();
 					timer.start();
 					while (timer.get() < 1.2) {
-						m_drive.tankDrive(finalDrive, finalDrive);
-						armMotor1.set(-.6);
+						m_drive.tankDrive(centerSpeed, centerSpeed);
+						armMotor1.set(-.7);
 					}
 					m_drive.tankDrive(0, 0);
 					armMotor1.set(0);
@@ -382,8 +376,8 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 					timer.reset();
 					Timer.delay(1);
 					while (timer.get() < 1.5) {
-						leftIntake.set(-.7);
-						rightIntake.set(.5);
+						leftIntake.set(-.6);
+						rightIntake.set(.7);
 					}
 					leftIntake.set(0);
 					rightIntake.set(0);
@@ -395,17 +389,17 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 				// if center and right switch
 				if (!getSwitchString()) {
 					driveDistance(60);
-//					Timer.delay(.3);
+					// Timer.delay(.3);
 					turnRight();
-//					Timer.delay(.3);
-					driveDistance(86);
+					// Timer.delay(.3);
+					driveDistance(82);
 					Timer.delay(.3);
 					turnLeft();
 					Timer timer = new Timer();
 					timer.start();
 					while (timer.get() < 1.2) {
-						m_drive.tankDrive(finalDrive, finalDrive);
-						armMotor1.set(-.6);
+						m_drive.tankDrive(centerSpeed, centerSpeed);
+						armMotor1.set(-.7);
 					}
 					m_drive.tankDrive(0, 0);
 					armMotor1.set(0);
@@ -413,7 +407,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 					m_drive.stopMotor();
 					timer.reset();
 					while (timer.get() < 1.5) {
-						leftIntake.set(-.7);
+						leftIntake.set(-.6);
 						rightIntake.set(.7);
 					}
 					leftIntake.set(0);
@@ -427,10 +421,10 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 				// if switch is right
 				if (!getSwitchString()) {
 					driveDistance(177);
-					turnLeft100();
+					turnLeft();
 					Timer timer = new Timer();
 					timer.start();
-					while (timer.get() < 1.5) {
+					while (timer.get() < .8) {
 						m_drive.tankDrive(finalDrive, finalDrive);
 					}
 					timer.reset();
@@ -446,48 +440,27 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 				}
 				// if switch is left
 				if (getSwitchString()) {
-//					driveDistance(70);
-//					Timer.delay(.3);
-//					turnLeft();
-//					Timer.delay(.3);
-//					driveDistance(178);
-//					Timer.delay(.3);
-//					turnRight();
-//					Timer timer = new Timer();
-//					timer.start();
-//					while (timer.get() < 2) {
-//						m_drive.tankDrive(.7, .7);
-//					}
-//					timer.reset();
-//					while (timer.get() < 3) {
-//						leftIntake.set(-1);
-//						rightIntake.set(1);
-//					}
-//					leftIntake.set(0);
-//					rightIntake.set(0);
-//					m_left.set(0);
-//					m_right.set(0);
-
-					// driveDistance(230);
-					// Timer.delay(.5);
-					// bbbhb();
-					// Timer.delay(.5);
-					// driveDistance(150);
-					// Timer.delay(.5);
-					// turnLeft();
-					// Timer.delay(.5);
-					// driveDistance(10);
-					// Timer timer = new Timer();
-					// timer.start();
-					// while (timer.get() < 1) {
-					// leftIntake.set(-1);
-					// rightIntake.set(1);
-					// }
-					// leftIntake.set(0);
-					// rightIntake.set(0);
-					// m_left.set(0);
-					// m_right.set(0);
-					driveDistance(144);
+					// // if right side switch and left position
+					driveDistance(212);
+					turnLeft();
+					driveDistance(220);
+					turnLeft();
+					driveDistance(70);
+					turnLeft();
+					Timer timer = new Timer();
+					timer.start();
+					while (timer.get() < .8) {
+						m_drive.tankDrive(finalDrive, finalDrive);
+					}
+					timer.reset();
+					while (timer.get() < 3) {
+						leftIntake.set(-1);
+						rightIntake.set(1);
+					}
+					leftIntake.set(0);
+					rightIntake.set(0);
+					m_left.set(0);
+					m_right.set(0);
 					break;
 				}
 
@@ -520,7 +493,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	public void teleopPeriodic() {
 		// update the continuous angle tracker with the current angle so it can track
 		// angles over time
-		dsCAT.nextAngle(navx.getYaw());
 
 		SmartDashboard.putNumber("left", left);
 		SmartDashboard.putNumber("right", right);
@@ -546,12 +518,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		if (driverStick.isFirstYPressed()) {
 			// double currentYaw = navx.getYaw();
 
-			
-			
-			
-			
-			
-			
 			dsCAT.reset();
 
 			float currentNavxYaw = navx.getYaw();
@@ -579,31 +545,32 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 
 		// Arm Motors
 		if (manipulatorStick.getRTValue() > .1) {// && (!topLimitSwitchArm.get()|| manipulatorStick.isXHeldDown())) {
-			armMotor1.set((-manipulatorStick.getRTValue())*.75);
-//			armMotor2.set(-manipulatorStick.getRTValue());
+			armMotor1.set((-manipulatorStick.getRTValue()) * .75);
+			// armMotor2.set(-manipulatorStick.getRTValue());
 
-		} else if (manipulatorStick.getLTValue() > .1) {// && (!bottomLimitSwitchArm.get() || manipulatorStick.isXHeldDown())) {
-			armMotor1.set((manipulatorStick.getLTValue())*.75);
-//			armMotor2.set(manipulatorStick.getLTValue());
+		} else if (manipulatorStick.getLTValue() > .1) {// && (!bottomLimitSwitchArm.get() ||
+														// manipulatorStick.isXHeldDown())) {
+			armMotor1.set((manipulatorStick.getLTValue()) * .75);
+			// armMotor2.set(manipulatorStick.getLTValue());
 
 		} else {
 			armMotor1.set(0);
-//			armMotor2.set(0);
+			// armMotor2.set(0);
 
 		}
-//		trying to use the absolute encoders without a proper class
-		
-//		  if (manipulatorStick.getRTValue() > .2 && topLimitSwitch.get()) {
-//		  movingSetpoint = manipulatorStick.getRTValue() * 40;
-//		  leftArmPIDMoving.setSetpoint(movingSetpoint);
-//		  rightArmPIDMoving.setSetpoint(movingSetpoint); pressed = true; } else if
-//		  (manipulatorStick.getLTValue() > .2 && bottomLimitSwitch.get()) {
-//		  movingSetpoint = manipulatorStick.getLTValue() * -40;
-//		  leftArmPIDMoving.setSetpoint(movingSetpoint);
-//		  rightArmPIDMoving.setSetpoint(movingSetpoint); pressed = true; } else { if
-//		  (pressed) { movingSetpoint = 0; leftArmPIDMoving.setSetpoint(movingSetpoint);
-//		  rightArmPIDMoving.setSetpoint(movingSetpoint); pressed = false; } }
-//		 
+		// trying to use the absolute encoders without a proper class
+
+		// if (manipulatorStick.getRTValue() > .2 && topLimitSwitch.get()) {
+		// movingSetpoint = manipulatorStick.getRTValue() * 40;
+		// leftArmPIDMoving.setSetpoint(movingSetpoint);
+		// rightArmPIDMoving.setSetpoint(movingSetpoint); pressed = true; } else if
+		// (manipulatorStick.getLTValue() > .2 && bottomLimitSwitch.get()) {
+		// movingSetpoint = manipulatorStick.getLTValue() * -40;
+		// leftArmPIDMoving.setSetpoint(movingSetpoint);
+		// rightArmPIDMoving.setSetpoint(movingSetpoint); pressed = true; } else { if
+		// (pressed) { movingSetpoint = 0; leftArmPIDMoving.setSetpoint(movingSetpoint);
+		// rightArmPIDMoving.setSetpoint(movingSetpoint); pressed = false; } }
+		//
 
 		// Climber goes up
 		// if (manipulatorStick.isStartHeldDown()) {
@@ -625,12 +592,12 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			elevatorMotor.set(0);
 			// armMotor1.set(0);
 		}
-		
+
 		if (manipulatorStick.isAHeldDown()) {
 			climberMotor1.set(.7);
 			climberMotor2.set(.7);
 		}
-		
+
 		else {
 			climberMotor1.set(0);
 			climberMotor2.set(0);
@@ -644,11 +611,11 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		}
 
 		// Big Lift Pistons
-//		if (manipulatorStick.isFirstBPressed()) {
-//			bigPistons.set(true);
-//		} else if (manipulatorStick.isFirstXPressed()) {
-//			bigPistons.set(false);
-//		}
+		// if (manipulatorStick.isFirstBPressed()) {
+		// bigPistons.set(true);
+		// } else if (manipulatorStick.isFirstXPressed()) {
+		// bigPistons.set(false);
+		// }
 
 		// Manipulator Intake
 		if (Math.abs(manipulatorStick.getLYValue()) > .2) {
@@ -668,13 +635,14 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		}
 		// Drive Straight
 		if (driverStick.isYHeldDown()) {
-			SmartDashboard.putNumber("c", correction);
-			double speedMultiplier = getMultiplier(timer.get(), 1.5);
-			left = right = .8 * speedMultiplier;
-			left = left - correction; //// IF MOTORS HAVE BEEN FLIPPED, FLIP SIGNS
-			right = right + correction; // what that ^ says
-			SmartDashboard.putString("DB/String 3", "corr " + (float) correction);
-			m_drive.tankDrive(left, right);
+//			SmartDashboard.putNumber("c", correction);
+//			double speedMultiplier = getMultiplier(timer.get(), 1.5);
+//			left = right = .8 * speedMultiplier;
+//			left = left - correction; //// IF MOTORS HAVE BEEN FLIPPED, FLIP SIGNS
+//			right = right + correction; // what that ^ says
+//			SmartDashboard.putString("DB/String 3", "corr " + (float) correction);
+//			m_drive.tankDrive(left, right);
+			driveStraight();
 		} else if (driverStick.isBHeldDown()) {
 			turnRight();
 		}
@@ -748,8 +716,9 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			return multiplier;
 		}
 	}
-	
-	public void driveStraight(){
+
+	public void driveStraight() {
+		dsCAT.nextAngle(navx.getYaw());
 		SmartDashboard.putNumber("c", correction);
 		double speedMultiplier = getMultiplier(timer.get(), 1);
 		left = right = forwardSpeed * speedMultiplier;
@@ -777,31 +746,31 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		navxPID.setSetpoint(currentYaw);
 		SmartDashboard.putString("DB/String 0", "setpoint" + navxPID.getSetpoint());
 		SmartDashboard.putString("DB/String 1", "yaw: " + dsCAT.getAngle());
-		
-//		while (speedMultiplier < 1) {
-//			dsCAT.nextAngle(navx.getYaw());
-//			speedMultiplier = getMultiplier(timer.get(), 1);
-//			left = forwardSpeed * speedMultiplier;
-//			right = forwardSpeed * speedMultiplier;
-//			left = left - correction;
-//			right = right + correction;
-//			SmartDashboard.putString("DB/String 2", "correction" + correction);
-//			m_drive.tankDrive(left, right);
-//			// SmartDashboard.putString("DB/String 0", "acceleratin");
-//			// SmartDashboard.putString("DB/String 1", "" + speedMultiplier);
-//		}
-		while ((target - leftMotor2.getSelectedSensorPosition(0)) > 4000) {
+
+		// while (speedMultiplier < 1) {
+		// dsCAT.nextAngle(navx.getYaw());
+		// speedMultiplier = getMultiplier(timer.get(), 1);
+		// left = forwardSpeed * speedMultiplier;
+		// right = forwardSpeed * speedMultiplier;
+		// left = left - correction;
+		// right = right + correction;
+		// SmartDashboard.putString("DB/String 2", "correction" + correction);
+		// m_drive.tankDrive(left, right);
+		// // SmartDashboard.putString("DB/String 0", "acceleratin");
+		// // SmartDashboard.putString("DB/String 1", "" + speedMultiplier);
+		// }
+		while ((target - leftMotor2.getSelectedSensorPosition(0)) > 10000) {
 			driveStraight();
-//			m_drive.tankDrive(forwardSpeed - correction, forwardSpeed + correction);
+			// m_drive.tankDrive(forwardSpeed - correction, forwardSpeed + correction);
 			// SmartDashboard.putString("DB/String 1", "" + (target -
 			// leftMotor1.getSelectedSensorPosition(0)));
 		}
 		leftPosition = leftMotor2.getSelectedSensorPosition(0);
 		rightPosition = -rightMotor2.getSelectedSensorPosition(0);
 		timer.reset();
-//		while (timer.get() < .3) {
-//			m_drive.tankDrive(-.4, -.4);
-//		}
+		// while (timer.get() < .3) {
+		// m_drive.tankDrive(-.4, -.4);
+		// }
 		m_drive.tankDrive(0, 0);
 		// while (speedMultiplier > 0) {
 		// speedMultiplier = getSlowDownMultiplier(timer.get(), 2);
@@ -829,6 +798,8 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	////////////////////////////////////////// /////////////////////////////////////////////////
 
 	public void turnRight() {
+		boolean correction = false;
+		Timer timer = new Timer();
 		trCAT.reset();
 		trCAT.nextAngle(navx.getYaw());
 		initialYaw = trCAT.getAngle();
@@ -852,20 +823,30 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		Timer.delay(.3);
 		trCAT.nextAngle(navx.getYaw());
 		currentYaw = trCAT.getAngle();
-		while (currentYaw < (.5 + targetYaw)) {
+		while (currentYaw < (targetYaw - .5)) {
 			m_drive.tankDrive(-turnSpeed, turnSpeed);
 			SmartDashboard.putString("DB/String 5", "correcting");
 			trCAT.nextAngle(navx.getYaw());
 			currentYaw = trCAT.getAngle();
+			correction = true;
 		}
 
-		while (currentYaw > (targetYaw - .5)) {
+		while (currentYaw > (targetYaw + .5)) {
 			m_drive.tankDrive(turnSpeed, -turnSpeed);
 			SmartDashboard.putString("DB/String 5", "correcting");
 			trCAT.nextAngle(navx.getYaw());
 			currentYaw = trCAT.getAngle();
+			correction = false;
 		}
-
+		timer.start();
+		while (timer.get() < .3) {
+			if (correction) {
+				m_drive.tankDrive(turnSpeed, -turnSpeed);
+			}
+			if (!correction) {
+				m_drive.tankDrive(-turnSpeed, turnSpeed);
+			}
+		}
 		m_drive.tankDrive(0, 0);
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
@@ -873,6 +854,8 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 	///////////////////////////// TURN LEFT
 	///////////////////////////// ////////////////////////////////////////////
 	public void turnLeft() {
+		boolean correction = false;
+		Timer timer = new Timer();
 		tlCAT.reset();
 		tlCAT.nextAngle(navx.getYaw());
 		initialYaw = tlCAT.getAngle();
@@ -901,6 +884,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			SmartDashboard.putString("DB/String 5", "correcting");
 			tlCAT.nextAngle(navx.getYaw());
 			currentYaw = tlCAT.getAngle();
+			correction = false;
 		}
 
 		while (currentYaw < (targetYaw - .5)) {
@@ -908,8 +892,17 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			SmartDashboard.putString("DB/String 5", "correcting");
 			tlCAT.nextAngle(navx.getYaw());
 			currentYaw = tlCAT.getAngle();
+			correction = true;
 		}
-
+		timer.start();
+		while (timer.get() < .3) {
+			if (correction) {
+				m_drive.tankDrive(turnSpeed, -turnSpeed);
+			}
+			if (!correction) {
+				m_drive.tankDrive(-turnSpeed, turnSpeed);
+			}
+		}
 		m_drive.tankDrive(0, 0);
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
@@ -997,7 +990,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		Timer.delay(.3);
 		trCAT.nextAngle(navx.getYaw());
 		currentYaw = trCAT.getAngle();
-		
+
 		while (currentYaw < (.5 + targetYaw)) {
 			m_drive.tankDrive(-turnSpeed, turnSpeed);
 			SmartDashboard.putString("DB/String 5", "correcting");
@@ -1015,6 +1008,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		m_drive.tankDrive(0, 0);
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
+
 	public void turnLeftNew(double adjustedYaw) {
 		tlCAT.reset();
 		tlCAT.nextAngle(navx.getYaw());
@@ -1055,7 +1049,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		m_drive.tankDrive(0, 0);
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
-	
+
 	public void turnRightNew(double adjustedYaw) {
 		trCAT.reset();
 		trCAT.nextAngle(navx.getYaw());
@@ -1097,4 +1091,3 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		SmartDashboard.putString("DB/String 5", "Turning finished: true");
 	}
 }
-
