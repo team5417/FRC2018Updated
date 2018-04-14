@@ -360,7 +360,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 					// Timer.delay(.3);
 					turnLeft();
 					// Timer.delay(.3);
-					driveDistance(92);
+					driveDistance(60);
 					Timer.delay(.3);
 					turnRight();
 					// Timer.delay(.3);
@@ -503,7 +503,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		SmartDashboard.putString("DB/String 0", "Left Position: " + leftPosition);
 		// float yaw = navx.getYaw();
 		yaw = dsCAT.getAngle();
-		SmartDashboard.putString("DB/String 4", "Z: " + (float) yaw);
 
 		// Gear Shift
 		if (driverStick.isFirstLBPressed()) {
@@ -618,12 +617,12 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		// }
 
 		// Manipulator Intake
-		if (Math.abs(manipulatorStick.getLYValue()) > .2) {
+		if (Math.abs(manipulatorStick.getLYValue()) > .05) {
 			leftIntake.set(manipulatorStick.getLYValue());
 		} else
 			leftIntake.set(0);
 
-		if (Math.abs(manipulatorStick.getRYValue()) > .2) {
+		if (Math.abs(manipulatorStick.getRYValue()) > .05) {
 			rightIntake.set(-manipulatorStick.getRYValue());
 		} else
 			rightIntake.set(0);
@@ -643,6 +642,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 //			SmartDashboard.putString("DB/String 3", "corr " + (float) correction);
 //			m_drive.tankDrive(left, right);
 			driveStraight();
+			SmartDashboard.putString("DB/String 4", "Z: " + (float) yaw);
 		} else if (driverStick.isBHeldDown()) {
 			turnRight();
 		}
