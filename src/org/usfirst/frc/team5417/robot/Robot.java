@@ -543,21 +543,22 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		// limitSwitchBottom.get());
 
 		// Arm Motors
-		if (manipulatorStick.getRTValue() > .1) {// && (!topLimitSwitchArm.get()|| manipulatorStick.isXHeldDown())) {
+		if (manipulatorStick.getRTValue() > .1) && (!topLimitSwitchArm.get()|| manipulatorStick.isXHeldDown())) {
 			armMotor1.set((-manipulatorStick.getRTValue()) * .75);
 			// armMotor2.set(-manipulatorStick.getRTValue());
 
-		} else if (manipulatorStick.getLTValue() > .1) {// && (!bottomLimitSwitchArm.get() ||
-														// manipulatorStick.isXHeldDown())) {
+		} else if (manipulatorStick.getLTValue() > .1) && (!bottomLimitSwitchArm.get() || manipulatorStick.isXHeldDown()) {														// manipulatorStick.isXHeldDown())) {
 			armMotor1.set((manipulatorStick.getLTValue()) * .75);
 			// armMotor2.set(manipulatorStick.getLTValue());
 
-		} else {
-			armMotor1.set(0);
-			// armMotor2.set(0);
+		}else
 
-		}
-		// trying to use the absolute encoders without a proper class
+	{
+		armMotor1.set(0);
+		// armMotor2.set(0);
+
+	}
+	// trying to use the absolute encoders without a proper class
 
 		// if (manipulatorStick.getRTValue() > .2 && topLimitSwitch.get()) {
 		// movingSetpoint = manipulatorStick.getRTValue() * 40;
@@ -728,7 +729,7 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		m_drive.tankDrive(left, right);
 	}
 
-	//////////////////////////////// DRIVE "STRAIGHT"
+	//////////////////////////////// DRIVE "STRAIGHT" for a set distance
 	public void driveDistance(int distance) {
 		int ticks = inchesToTicks(distance - 8);
 		int count = leftMotor2.getSelectedSensorPosition(0);
