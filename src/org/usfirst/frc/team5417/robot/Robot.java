@@ -304,14 +304,17 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			case leftAuto:
 				// if switch is left and left side station
 				if (getSwitchString()) {
-					driveDistance(160);
+					gearShift.set(true);
+					driveDistance(130);
+					gearShift.set(false);
 					turnRight();
 					Timer timer = new Timer();
 					timer.start();
-
-					while (timer.get() < .8) {
-						m_drive.tankDrive(finalDrive, finalDrive);
+					while (timer.get() < .55) {
+						m_drive.tankDrive(.8, .8);
 					}
+					m_left.set(0);
+					m_right.set(0);
 					timer.reset();
 					while (timer.get() < 3) {
 						leftIntake.set(-1);
@@ -319,8 +322,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 					}
 					leftIntake.set(0);
 					rightIntake.set(0);
-					m_left.set(0);
-					m_right.set(0);
 					break;
 				}
 				// if right side switch and left position
@@ -407,13 +408,17 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			case rightAuto: ////// Right Position Autonomous//////
 				// if switch is right
 				if (!getSwitchString()) {
-					driveDistance(160);
+					gearShift.set(true);
+					driveDistance(130);
+					gearShift.set(false);
 					turnLeft();
 					Timer timer = new Timer();
 					timer.start();
-					while (timer.get() < .8) {
-						m_drive.tankDrive(finalDrive, finalDrive);
+					while (timer.get() < .4) {
+						m_drive.tankDrive(.8,.8);
 					}
+					m_left.set(0);
+					m_right.set(0);
 					timer.reset();
 					while (timer.get() < 3) {
 						leftIntake.set(-1);
@@ -421,8 +426,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 					}
 					leftIntake.set(0);
 					rightIntake.set(0);
-					m_left.set(0);
-					m_right.set(0);
 					break;
 				}
 				// if switch is left
@@ -542,7 +545,6 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 			armMotor1.set((manipulatorStick.getLTValue()) * .75);
 			// armMotor2.set(manipulatorStick.getLTValue());
 
-			
 		} else
 
 		{
@@ -754,8 +756,15 @@ public class Robot extends TimedRobot implements PIDSource, PIDOutput {
 		// // SmartDashboard.putString("DB/String 1", "" + speedMultiplier);
 		// }
 		while ((target - leftMotor2.getSelectedSensorPosition(0)) > 2000) {
-			left = .8;
-			right = .8;
+			if (!gearShift.get()) {
+				left = .8;
+				right = .8;
+			}
+
+			if (gearShift.get()) {
+				left = .4;
+				right = .4;
+			}
 			driveStraight();
 			// m_drive.tankDrive(forwardSpeed - correction, forwardSpeed + correction);
 			// SmartDashboard.putString("DB/String 1", "" + (target -
